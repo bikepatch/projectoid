@@ -2,11 +2,11 @@ use std::{env, fs};
 
 struct NemoFinder {
     path: String,
-    nemo_to_find: Option<String>
+    nemo_to_find: String
 }
 
 impl NemoFinder {
-    fn new(path: String, nemo_to_find: Option<String>) -> Self {
+    fn new(path: String, nemo_to_find: String) -> Self {
         NemoFinder { path, nemo_to_find }
     }
 
