@@ -1,5 +1,20 @@
 use std::{env, fs};
 
+struct NemoFinder {
+    path: String,
+    nemo_to_find: Option<String>
+}
+
+impl NemoFinder {
+    fn new(path: String, nemo_to_find: Option<String>) -> Self {
+        NemoFinder { path, nemo_to_find }
+    }
+
+    fn recursive_search(&self, path: &String) {
+
+    }
+}
+
 fn main() {
     // Read what comes
     let args: Vec<String> = env::args().collect();
