@@ -1,8 +1,9 @@
 use std::{env, fs};
+use std::io::Write;
 
 trait NemoFinder {
     fn make_search(&self, path: &str, nemo_to_find: &str, print_list: &mut Vec<String>);
-    fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>);
+    fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>, output: &str);
 }
 
 struct DirSeeker;
@@ -31,7 +32,7 @@ impl NemoFinder for DirSeeker{
                         let fname = printable_path.file_name().unwrap().to_str().unwrap();
                         if !nemo_to_find.is_empty() {
                             if fname == nemo_to_find {
-                                eprintln!("Found Nemo at: {:?}", printable_path);
+                                print_list.push(format!("Found Nemo at: {:?}", printable_path));
                                 break;
                             }
                         } else {
@@ -48,12 +49,20 @@ impl NemoFinder for DirSeeker{
         }
     }
 
-    fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>) {
+    fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>, output: &str) {
         if sort_flag {
             bubble(print_list);
         }
-        for printable in print_list {
-            eprintln!("{:?}", printable);
+        if output != "" {
+            if let Ok(mut file) = fs::OpenOptions::new().write(true).open(output) {
+                for printable in print_list {
+                    writeln!(file, "{:?}", printable).expect("Failed to write into a file");
+                }
+            }
+        } else {
+            for printable in print_list {
+                eprintln!("{:?}", printable);
+            }
         }
     }
 }
@@ -64,6 +73,7 @@ fn main() {
 
     let my_path = &args[1];
     let mut nemo_to_find = "";
+    let mut output_file = "";
     let mut sort_flag = false;
     let mut print_list : Vec<String> = Vec::new();
 
@@ -75,12 +85,20 @@ fn main() {
         }
     };
 
+    if let Some(index) = args.iter().position(|value| value == "-f") {
+        if index + 1 < args.len() {
+            if let Some(val) = args.get(index + 1) {
+                output_file = val;
+            }
+        }
+    };
+
     if args.iter().any(|val| val == "--sort") {
         sort_flag = true;
     }
 
     DirSeeker.make_search(my_path, nemo_to_find, &mut print_list);
-    DirSeeker.make_print(sort_flag, &mut print_list);
+    DirSeeker.make_print(sort_flag, &mut print_list, output_file);
 
 
     // Joke
