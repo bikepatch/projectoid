@@ -1,14 +1,26 @@
 use std::{env, fs};
 
 
+fn bubble <T: PartialOrd>(arr: &mut[T]){
+    let n = arr.len();
+    for i in 0..n {
+        for j in 0..n {
+            if arr[i] > arr[j+1] {
+                arr.swap(j, j + 1);
+            }
+        }
+    }
+}
+
 trait NemoFinder {
-    fn make_search(&self, path: &str, nemo_to_find: &str);
+    fn make_search(&self, path: &str, nemo_to_find: &str, sort_flag: bool);
 }
 
 struct DirSeeker;
 
 impl NemoFinder for DirSeeker{
-    fn make_search(&self, path: &str, nemo_to_find: &str) {
+    fn make_search(&self, path: &str, nemo_to_find: &str, sort_flag: bool) {
+        let mut print_list : Vec<String> = Vec::new();
         if let Ok(printables) = fs::read_dir(&path) {
             for printable in printables {
                 if let Ok(printable) = printable {
@@ -23,7 +35,7 @@ impl NemoFinder for DirSeeker{
                             eprintln!("{:?}", fname);
                         }
                     } else {
-                        self.make_search(printable_path.to_str().unwrap(), nemo_to_find)
+                        self.make_search(printable_path.to_str().unwrap(), nemo_to_find, sort_flag)
                     }
                 }
             }
@@ -48,7 +60,7 @@ fn main() {
         ""
     };
 
-    DirSeeker.make_search(my_path, nemo_to_find);
+    DirSeeker.make_search(my_path, nemo_to_find, true);
 
 
     // Joke
