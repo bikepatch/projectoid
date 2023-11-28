@@ -10,7 +10,31 @@ struct DirSeeker;
 
 impl NemoFinder for DirSeeker{
     fn make_search(self, path: String, nemo_to_find: String) {
-        todo!()
+        if let Ok(printables) = fs::read_dir(&path) {
+            for printable in printables {
+                match printable {
+                    Ok(printable_name) => {
+                        if printable_name.path().is_file() {
+                            if !nemo_to_find.is_empty() {
+                                if printable_name.file_name() == nemo_to_find {
+                                    eprintln!("Found Nemo ar: {:?}", printable_name.file_name());
+                                }
+                            } else {
+                                eprintln!("{:?}", printable_name.file_name());
+                            }
+                        } else if printable.is_dir() {
+                            self.make_search(printable.file_name(), nemo_to_find.clone())
+                        }
+                    },
+                    Err(err) => {
+                        eprintln!("Failed to open file/folder: {}", err);
+                    }
+                }
+            }
+        } else {
+            eprintln!("Failed to open folder entered.");
+            std::process::exit(1);
+        }
     }
 }
 
@@ -22,28 +46,14 @@ fn main() {
     // Take the dir name
     let my_path = &args[1];
 
-    // Read all
-    let printables = match fs::read_dir(my_path) {
-        Ok(entered) => entered,
-        Err(err) => {
-            eprintln!("Failed to open folder entered: {}", err);
-            std::process::exit(1);
-        }
+    let nemo_to_find = if args.len() > 3 && args[2] == "--find" {
+        args[3].clone()
+    } else{
+        String::new()
     };
 
-    // Deal one by one
-    for printable in printables {
-        match printable {
-            Ok(name_to_print) => {
-                if name_to_print.path().is_file() {
-                    eprintln!("{:?}", name_to_print.file_name());
-                }
-            },
-            Err(err) => {
-                eprintln!("Failed to open file/folder: {}", err);
-            }
-        }
-    }
+    DirSeeker.make_search(my_path.clone(), nemo_to_find);
+
 
     // Joke
     println!("Some Yoda Thoughts It Was");
