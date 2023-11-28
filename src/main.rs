@@ -1,12 +1,12 @@
 use std::{env, fs};
 use std::io::Write;
 
-trait NemoFinder {
+pub trait NemoFinder {
     fn make_search(&self, path: &str, nemo_to_find: &str, print_list: &mut Vec<String>);
     fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>, output: &str);
 }
 
-struct DirSeeker;
+pub struct DirSeeker;
 
 
 fn bubble( arr: &mut Vec<String>){
