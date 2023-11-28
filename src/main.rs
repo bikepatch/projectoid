@@ -1,22 +1,22 @@
 use std::{env, fs};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-struct NemoFinder {
-    path: String,
-    nemo_to_find: String
+trait NemoFinder {
+    fn make_search(self, path: String, nemo_to_find: String);
 }
 
-impl NemoFinder {
-    fn new(path: String, nemo_to_find: String) -> Self {
-        NemoFinder { path, nemo_to_find }
-    }
+struct DirSeeker;
 
-    fn recursive_search(&self, path: &String) {
-
+impl NemoFinder for DirSeeker{
+    fn make_search(self, path: String, nemo_to_find: String) {
+        todo!()
     }
 }
 
 fn main() {
     // Read what comes
+
     let args: Vec<String> = env::args().collect();
 
     // Take the dir name
