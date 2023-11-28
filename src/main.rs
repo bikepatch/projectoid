@@ -1,33 +1,29 @@
 use std::{env, fs};
-use std::cell::RefCell;
-use std::rc::Rc;
+
 
 trait NemoFinder {
-    fn make_search(self, path: String, nemo_to_find: String);
+    fn make_search(&self, path: String, nemo_to_find: String);
 }
 
 struct DirSeeker;
 
 impl NemoFinder for DirSeeker{
-    fn make_search(self, path: String, nemo_to_find: String) {
+    fn make_search(&self, path: String, nemo_to_find: String) {
         if let Ok(printables) = fs::read_dir(&path) {
             for printable in printables {
-                match printable {
-                    Ok(printable_name) => {
-                        if printable_name.path().is_file() {
-                            if !nemo_to_find.is_empty() {
-                                if printable_name.file_name() == nemo_to_find {
-                                    eprintln!("Found Nemo ar: {:?}", printable_name.file_name());
-                                }
-                            } else {
-                                eprintln!("{:?}", printable_name.file_name());
+                if let Ok(printable) = printable {
+                    let printable_path = printable.path();
+                    if printable_path.is_file() {
+                        let fname = printable_path.file_name().unwrap().to_string_lossy().to_string();
+                        if !nemo_to_find.is_empty() {
+                            if fname == nemo_to_find {
+                                eprintln!("Found Nemo at: {:?}", printable_path);
                             }
-                        } else if printable.is_dir() {
-                            self.make_search(printable.file_name(), nemo_to_find.clone())
+                        } else {
+                            eprintln!("{:?}", fname);
                         }
-                    },
-                    Err(err) => {
-                        eprintln!("Failed to open file/folder: {}", err);
+                    } else {
+                        self.make_search(printable_path.to_string_lossy().to_string(), nemo_to_find.clone())
                     }
                 }
             }
