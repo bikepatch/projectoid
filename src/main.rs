@@ -1,7 +1,7 @@
 use std::{env, fs};
 
 trait NemoFinder {
-    fn make_search(&self, base_path: &str,  path: &str, nemo_to_find: &str, print_list: &mut Vec<String>);
+    fn make_search(&self, path: &str, nemo_to_find: &str, print_list: &mut Vec<String>);
     fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>);
 }
 
@@ -22,25 +22,23 @@ fn bubble( arr: &mut Vec<String>){
 
 
 impl NemoFinder for DirSeeker{
-    fn make_search(&self, base_path: &str, path: &str, nemo_to_find: &str, print_list: &mut Vec<String>) {
+    fn make_search(&self, path: &str, nemo_to_find: &str, print_list: &mut Vec<String>) {
         if let Ok(printables) = fs::read_dir(&path) {
             for printable in printables {
                 if let Ok(printable) = printable {
                     let printable_path = printable.path();
                     if printable_path.is_file() {
-                        let relative_path = printable_path.strip_prefix(base_path).unwrap_or(&printable_path);
-                        let fname = relative_path.to_str().unwrap();
+                        let relative_path = printable_path.to_str().unwrap();
+                        let fname = printable.file_name();
                         if !nemo_to_find.is_empty() {
                             if fname == nemo_to_find {
-                                eprintln!("Found Nemo at: {:?}", printable_path);
-                                break;
+                                print_list.push(relative_path.parse().unwrap());
                             }
                         } else {
-                            let relative_string= format!("{}/{}", path.trim_end_matches('/'), fname);
-                            print_list.push(relative_string)
+                            print_list.push(relative_path.parse().unwrap());
                         }
                     } else {
-                        self.make_search(base_path, printable_path.to_str().unwrap(), nemo_to_find, print_list)
+                        self.make_search( printable_path.to_str().unwrap(), nemo_to_find, print_list)
                     }
                 }
             }
@@ -81,7 +79,7 @@ fn main() {
         sort_flag = true;
     }
 
-    DirSeeker.make_search(my_path, my_path, nemo_to_find, &mut print_list);
+    DirSeeker.make_search(my_path, nemo_to_find, &mut print_list);
     DirSeeker.make_print(sort_flag, &mut print_list);
 
 
