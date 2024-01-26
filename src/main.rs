@@ -92,25 +92,17 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     let my_path = &args[1];
-    let mut nemo_to_find = "";
-    let mut output_file = "";
+    let mut nemo_to_find: Option<String> = None;
+    let mut output_file: Option<String> = None;
     let mut sort_flag = false;
     let mut print_list : Vec<String> = Vec::new();
 
     if let Some(index) = args.iter().position(|value| value == "--find") {
-        if index + 1 < args.len() {
-            if let Some(val) = args.get(index + 1) {
-                nemo_to_find = val;
-            }
-        }
+        nemo_to_find = args.get(index + 1).cloned();
     };
 
     if let Some(index) = args.iter().position(|value| value == "-f") {
-        if index + 1 < args.len() {
-            if let Some(val) = args.get(index + 1) {
-                output_file = val;
-            }
-        }
+        output_file = args.get(index + 1).cloned();
     };
 
     if args.iter().any(|val| val == "--sort") {
@@ -123,7 +115,12 @@ fn main() {
         bubble(&mut print_list);
     }
 
-    DirSeeker.make_print(sort_flag, &mut print_list, output_file);
+    let print_strategy: Box<dyn PrintStrategy> = match &output_file {
+        None => {Box::new(Outputo)},
+        Some(name) => {Box::new(Filo{ fname: name.clone() })}
+    };
+
+    print_strategy.make_print(&print_list);
 
 
     // Joke
