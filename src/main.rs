@@ -6,7 +6,15 @@ pub trait NemoFinder {
     fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>, output: &str);
 }
 
+pub trait PrintStrategy {
+    fn make_print(&self, print_list: &Vec<String>);
+}
+
 pub struct DirSeeker;
+pub struct Outputo;
+pub struct Filo{
+    fname: String
+}
 
 
 fn bubble( arr: &mut Vec<String>){
@@ -67,6 +75,18 @@ impl NemoFinder for DirSeeker{
     }
 }
 
+impl PrintStrategy for Outputo {
+    fn make_print(&self, print_list: &Vec<String>) {
+        todo!()
+    }
+}
+
+impl PrintStrategy for Filo {
+    fn make_print(&self, print_list: &Vec<String>) {
+        todo!()
+    }
+}
+
 fn main() {
 
     let args: Vec<String> = env::args().collect();
@@ -98,6 +118,11 @@ fn main() {
     }
 
     DirSeeker.make_search(my_path, nemo_to_find, &mut print_list);
+
+    if sort_flag {
+        bubble(&mut print_list);
+    }
+
     DirSeeker.make_print(sort_flag, &mut print_list, output_file);
 
 
