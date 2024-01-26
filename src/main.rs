@@ -2,8 +2,7 @@ use std::{env, fs};
 use std::io::Write;
 
 pub trait NemoFinder {
-    fn make_search(&self, path: &str, nemo_to_find: &str, print_list: &mut Vec<String>);
-    fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>, output: &str);
+    fn make_search(&self, path: &str, nemo_to_find: Option<&str>, print_list: &mut Vec<String>);
 }
 
 pub trait PrintStrategy {
@@ -39,8 +38,9 @@ impl NemoFinder for DirSeeker{
                     if printable_path.is_file() {
                         let relative_path = printable_path.to_str().unwrap();
                         let fname = printable.file_name();
+                        let fstr = fname.to_str().unwrap();
                         if !nemo_to_find.is_none() {
-                            if fname == nemo_to_find {
+                            if Some(fstr) == nemo_to_find {
                                 print_list.push(relative_path.parse().unwrap());
                             }
                         } else {
@@ -56,34 +56,23 @@ impl NemoFinder for DirSeeker{
             std::process::exit(1);
         }
     }
-
-    fn make_print(&self, sort_flag: bool, print_list: &mut Vec<String>, output: &str) {
-        if sort_flag {
-            bubble(print_list);
-        }
-        if output != "" {
-            if let Ok(mut file) = fs::OpenOptions::new().write(true).open(output) {
-                for printable in print_list {
-                    writeln!(file, "{:?}", printable).expect("Failed to write into a file");
-                }
-            }
-        } else {
-            for printable in print_list {
-                eprintln!("{:?}", printable);
-            }
-        }
-    }
 }
 
 impl PrintStrategy for Outputo {
     fn make_print(&self, print_list: &Vec<String>) {
-        todo!()
+        for printable in print_list {
+            eprintln!("{:?}", printable);
+        }
     }
 }
 
 impl PrintStrategy for Filo {
     fn make_print(&self, print_list: &Vec<String>) {
-        todo!()
+        if let Ok(mut file) = fs::OpenOptions::new().write(true).open(&self.fname) {
+            for printable in print_list {
+                writeln!(file, "{:?}", printable).expect("Failed to write into a file");
+            }
+        }
     }
 }
 
