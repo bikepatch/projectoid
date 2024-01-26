@@ -1,4 +1,5 @@
 use std::{env, fs};
+use std::fs::OpenOptions;
 use std::io::{Write, Read};
 use std::path::Path;
 
@@ -19,7 +20,8 @@ pub struct Filo{
 pub enum Occurience{
     File(String),
     Directory(String),
-    TextFile(String)
+    TextFile(String),
+    InFileText(String)
 }
 
 fn bubble( arr: &mut Vec<Occurience>){
@@ -68,7 +70,7 @@ impl NemoFinder for DirSeeker{
 impl PrintStrategy for Outputo {
     fn make_print(&self, print_list: &Vec<Occurience>) {
         for printable in print_list {
-            match printable { Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) =>
+            match printable { Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) | Occurience::InFileText(path) =>
                 {
                     eprintln!("{:?}", path);
                 }
@@ -79,9 +81,9 @@ impl PrintStrategy for Outputo {
 
 impl PrintStrategy for Filo {
     fn make_print(&self, print_list: &Vec<Occurience>) {
-        if let Ok(mut file) = fs::OpenOptions::new().write(true).open(&self.fname) {
+        if let Ok(mut file) = fs::OpenOptions::new().write(true).truncate(true).create(true).open(&self.fname) {
             for printable in print_list {
-                match printable { Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) =>
+                match printable { Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) | Occurience::InFileText(path) =>
                     {
                         writeln!(file, "{:?}", path).expect("Failed to write into a file");
                     }
@@ -93,20 +95,33 @@ impl PrintStrategy for Filo {
 
 impl Occurience{
     fn file_name(&self) -> &str {
-        match self {Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) => path}
+        match self {Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) | Occurience::InFileText(path) => path}
     }
+}
+
+fn find_in_file(path: &str, nemo_to_find: &str, print_list: & mut Vec<Occurience>) -> Result<(), std::io::Error> {
+    let mut file = fs::File::open(path)?;
+    let mut text = String::new();
+    file.read_to_string(&mut text)?;
+    for (index, line) in text.lines().enumerate() {
+        if line.contains(nemo_to_find) {
+            print_list.push(Occurience::InFileText(format!("{}: Line {}: {}", path, index + 1, line)));
+        }
+    }
+    Ok(())
 }
 
 fn main() {
 
     let args: Vec<String> = env::args().collect();
-
+    let puppy = "d";
     let my_path = &args[1];
     let mut nemo_to_find: Option<&str> = None;
     let mut output_file: Option<&str> = None;
     let mut in_file_flag = false;
     let mut sort_flag = false;
     let mut print_list = Vec::new();
+    let mut in_text_list = Vec::new();
 
     if let Some(index) = args.iter().position(|value| value == "--find") {
         nemo_to_find = args.get(index + 1).map(|s| s.as_str());
@@ -126,13 +141,24 @@ fn main() {
 
     DirSeeker.make_search(my_path, &mut print_list);
 
-    if let Some(name) = nemo_to_find {
-        print_list.retain(|printable| {
-            let printable_path = match printable {
-                Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) => path
-            };
-            Path::new(printable_path).file_name().and_then(|fname| fname.to_str()).map(|fname| fname == name).unwrap_or(false)
-        });
+    if in_file_flag {
+        for printable in &print_list{
+            if let Occurience::TextFile(path) = printable {
+                if let Err(e) = find_in_file(path, nemo_to_find.unwrap(), &mut in_text_list) {
+                    eprintln!("Error reading file {}: {}", path, e);
+                }
+            }
+        }
+        print_list = in_text_list;
+    } else {
+        if let Some(name) = nemo_to_find {
+            print_list.retain(|printable| {
+                let printable_path = match printable {
+                    Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) | Occurience::InFileText(path) => path
+                };
+                Path::new(printable_path).file_name().and_then(|fname| fname.to_str()).map(|fname| fname == name).unwrap_or(false)
+            });
+        }
     }
 
     if sort_flag {
