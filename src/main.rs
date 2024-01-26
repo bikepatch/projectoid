@@ -29,14 +29,14 @@ impl NemoFinder for DirSeeker{
                 if let Ok(printable) = printable {
                     let printable_path = printable.path();
                     if printable_path.is_file() {
-                        let fname = printable_path.file_name().unwrap().to_str().unwrap();
+                        let relative_path = printable_path.to_str().unwrap();
+                        let fname = printable.file_name();
                         if !nemo_to_find.is_empty() {
                             if fname == nemo_to_find {
-                                print_list.push(format!("Found Nemo at: {:?}", printable_path));
-                                break;
+                                print_list.push(relative_path.parse().unwrap());
                             }
                         } else {
-                            print_list.push(fname.to_string())
+                            print_list.push(relative_path.parse().unwrap());
                         }
                     } else {
                         self.make_search(printable_path.to_str().unwrap(), nemo_to_find, print_list)
