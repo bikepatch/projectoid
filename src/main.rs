@@ -25,14 +25,7 @@ pub enum Occurience{
 }
 
 fn bubble( arr: &mut Vec<Occurience>){
-    let n = arr.len();
-    for i in 0..n {
-        for j in 0..(n - 1){
-            if arr[j].file_name() > arr[j + 1].file_name() {
-                arr.swap(j, j + 1);
-            }
-        }
-    }
+    arr.sort_by(|a,b| a.file_name().cmp(b.file_name()));
 }
 
 
@@ -40,7 +33,7 @@ fn bubble( arr: &mut Vec<Occurience>){
 impl NemoFinder for DirSeeker{
     fn make_search(&self, path: &str, print_list: &mut Vec<Occurience>) {
         if let Ok(printables) = fs::read_dir(&path) {
-            for printable in printables {
+            printables.for_each(|printable| {
                 if let Ok(printable) = printable {
                     let printable_path = printable.path();
                     let print_str = printable_path.to_str().unwrap();
@@ -59,7 +52,7 @@ impl NemoFinder for DirSeeker{
                         }
                     }
                 }
-            }
+            });
         } else {
             eprintln!("Failed to open folder entered.");
             std::process::exit(1);
@@ -69,26 +62,26 @@ impl NemoFinder for DirSeeker{
 
 impl PrintStrategy for Outputo {
     fn make_print(&self, print_list: &Vec<Occurience>) {
-        for printable in print_list {
+        print_list.iter().for_each(|printable| {
             match printable { Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) | Occurience::InFileText(path) =>
                 {
                     eprintln!("{:?}", path);
                 }
             }
-        }
+        });
     }
 }
 
 impl PrintStrategy for Filo {
     fn make_print(&self, print_list: &Vec<Occurience>) {
         if let Ok(mut file) = fs::OpenOptions::new().write(true).truncate(true).create(true).open(&self.fname) {
-            for printable in print_list {
+            print_list.iter().for_each(|printable| {
                 match printable { Occurience::File(path) | Occurience::Directory(path) | Occurience::TextFile(path) | Occurience::InFileText(path) =>
                     {
                         writeln!(file, "{:?}", path).expect("Failed to write into a file");
                     }
                 }
-            }
+            });
         }
     }
 }
@@ -103,11 +96,11 @@ fn find_in_file(path: &str, nemo_to_find: &str, print_list: & mut Vec<Occurience
     let mut file = fs::File::open(path)?;
     let mut text = String::new();
     file.read_to_string(&mut text)?;
-    for (index, line) in text.lines().enumerate() {
-        if line.contains(nemo_to_find) {
+    text.lines().enumerate()
+        .filter(|&(_, line)| line.contains(nemo_to_find))
+        .for_each(|(index, line)| {
             print_list.push(Occurience::InFileText(format!("{}: Line {}: {}", path, index + 1, line)));
-        }
-    }
+        });
     Ok(())
 }
 
@@ -142,13 +135,13 @@ fn main() {
     DirSeeker.make_search(my_path, &mut print_list);
 
     if in_file_flag {
-        for printable in &print_list{
+        &print_list.iter().for_each(|printable| {
             if let Occurience::TextFile(path) = printable {
                 if let Err(e) = find_in_file(path, nemo_to_find.unwrap(), &mut in_text_list) {
                     eprintln!("Error reading file {}: {}", path, e);
                 }
             }
-        }
+        });
         print_list = in_text_list;
     } else {
         if let Some(name) = nemo_to_find {
