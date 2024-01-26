@@ -31,7 +31,7 @@ fn bubble( arr: &mut Vec<String>){
 
 
 impl NemoFinder for DirSeeker{
-    fn make_search(&self, path: &str, nemo_to_find: &str, print_list: &mut Vec<String>) {
+    fn make_search(&self, path: &str, nemo_to_find: Option<&str>, print_list: &mut Vec<String>) {
         if let Ok(printables) = fs::read_dir(&path) {
             for printable in printables {
                 if let Ok(printable) = printable {
@@ -39,7 +39,7 @@ impl NemoFinder for DirSeeker{
                     if printable_path.is_file() {
                         let relative_path = printable_path.to_str().unwrap();
                         let fname = printable.file_name();
-                        if !nemo_to_find.is_empty() {
+                        if !nemo_to_find.is_none() {
                             if fname == nemo_to_find {
                                 print_list.push(relative_path.parse().unwrap());
                             }
@@ -92,17 +92,17 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     let my_path = &args[1];
-    let mut nemo_to_find: Option<String> = None;
-    let mut output_file: Option<String> = None;
+    let mut nemo_to_find: Option<&str> = None;
+    let mut output_file: Option<&str> = None;
     let mut sort_flag = false;
     let mut print_list : Vec<String> = Vec::new();
 
     if let Some(index) = args.iter().position(|value| value == "--find") {
-        nemo_to_find = args.get(index + 1).cloned();
+        nemo_to_find = args.get(index + 1).map(|s| s.as_str());
     };
 
     if let Some(index) = args.iter().position(|value| value == "-f") {
-        output_file = args.get(index + 1).cloned();
+        output_file = args.get(index + 1).map(|s| s.as_str());
     };
 
     if args.iter().any(|val| val == "--sort") {
@@ -115,9 +115,9 @@ fn main() {
         bubble(&mut print_list);
     }
 
-    let print_strategy: Box<dyn PrintStrategy> = match &output_file {
+    let print_strategy: Box<dyn PrintStrategy> = match output_file {
         None => {Box::new(Outputo)},
-        Some(name) => {Box::new(Filo{ fname: name.clone() })}
+        Some(name) => {Box::new(Filo{ fname: name.to_string() })}
     };
 
     print_strategy.make_print(&print_list);
